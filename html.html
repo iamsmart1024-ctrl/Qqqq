@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>영어 내신대비 문제 제작기</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:sans-serif;background:#f0f0f0;color:#222;}
+header{background:#1a237e;color:#fff;padding:16px 24px;display:flex;align-items:center;gap:12px;}
+header h1{font-size:1.2rem;flex:1;}
+.wrap{max-width:860px;margin:0 auto;padding:20px;}
+.card{background:#fff;border:1px solid #ccc;border-radius:6px;padding:20px;margin-bottom:14px;}
+.card h2{font-size:0.95rem;font-weight:700;color:#1a237e;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #eee;}
+section{display:none;}
+section.active{display:block;}
+textarea{width:100%;height:220px;border:1px solid #ccc;border-radius:5px;padding:10px;font-size:0.82rem;resize:vertical;font-family:monospace;}
+input[type=text]{width:100%;border:1px solid #ccc;border-radius:5px;padding:8px 10px;font-size:0.88rem;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 18px;border-radius:5px;border:none;cursor:pointer;font-size:0.85rem;font-weight:700;}
+.btn-b{background:#1a237e;color:#fff;}
+.btn-b:disabled{background:#aaa;cursor:not-allowed;}
+.btn-o{background:#fff;border:2px solid #1a237e;color:#1a237e;}
+.btn-g{background:#2e7d32;color:#fff;}
+.btn-r{background:#c62828;color:#fff;}
+.btn-sm{padding:5px 12px;font-size:0.78rem;}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center;}
+.tw{display:flex;gap:8px;flex-wrap:wrap;}
+.tl{border:2px solid #ccc;border-radius:5px;padding:9px 14px;cursor:pointer;font-size:0.82rem;user-select:none;}
+.tl.on{border-color:#1a237e;background:#e8eaf6;font-weight:700;}
+.tl input{margin-right:4px;}
+.pgw{display:flex;flex-wrap:wrap;gap:7px;}
+.pi{border:1.5px solid #ccc;border-radius:5px;padding:6px 11px;cursor:pointer;font-size:0.8rem;user-select:none;}
+.pi.on{border-color:#1a237e;background:#e8eaf6;font-weight:700;}
+.sa{font-size:0.75rem;color:#3949ab;cursor:pointer;text-decoration:underline;border:none;background:none;margin-right:6px;}
+.info{font-size:0.78rem;color:#555;margin-top:6px;}
+/* 그룹 카드 */
+.group-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:14px;}
+.group-card{background:#fff;border:2px solid #ddd;border-radius:8px;padding:16px;cursor:pointer;transition:border-color .2s;position:relative;}
+.group-card:hover{border-color:#1a237e;background:#f0f2ff;}
+.group-card h3{font-size:0.92rem;font-weight:700;color:#1a237e;margin-bottom:4px;}
+.group-card p{font-size:0.75rem;color:#888;}
+.group-card .del-btn{position:absolute;top:8px;right:8px;background:none;border:none;cursor:pointer;font-size:0.85rem;color:#aaa;}
+.group-card .del-btn:hover{color:#c62828;}
+.add-group-box{border:2px dashed #ccc;border-radius:8px;padding:16px;text-align:center;cursor:pointer;color:#888;font-size:0.88rem;transition:all .2s;}
+.add-group-box:hover{border-color:#1a237e;color:#1a237e;background:#f0f2ff;}
+/* 지문 리스트 */
+.passage-list{margin-top:10px;}
+.passage-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #ddd;border-radius:5px;margin-bottom:6px;background:#fafafa;}
+.passage-row .plabel{font-size:0.85rem;font-weight:700;color:#1a237e;min-width:40px;}
+.passage-row .pcontent{font-size:0.78rem;color:#555;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.passage-row .pbtn-wrap{display:flex;gap:4px;flex-shrink:0;}
+/* 모달 */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:none;align-items:center;justify-content:center;}
+.modal-bg.show{display:flex;}
+.modal{background:#fff;border-radius:8px;padding:24px;width:90%;max-width:520px;max-height:90vh;overflow-y:auto;}
+.modal h3{font-size:1rem;font-weight:700;color:#1a237e;margin-bottom:14px;}
+.modal label{font-size:0.82rem;font-weight:600;display:block;margin-bottom:4px;margin-top:10px;}
+/* toast */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(10px);background:#333;color:#fff;padding:8px 20px;border-radius:16px;font-size:0.82rem;opacity:0;transition:all .3s;z-index:9999;pointer-events:none;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+/* 문제지 */
+@media screen{
+  .ppage{width:210mm;min-height:297mm;margin:0 auto 20px;background:#fff;padding:12mm 11mm;box-shadow:0 2px 8px rgba(0,0,0,.12);font-family:'Times New Roman',serif;}
+  .apage{width:210mm;margin:0 auto 20px;background:#fff;padding:12mm 11mm;box-shadow:0 2px 8px rgba(0,0,0,.12);font-family:'Times New Roman',serif;}
+}
+@media print{
+  header,.wrap>section:not(#s4),#ctrlBar,#hint{display:none!important;}
+  #s4{display:block!important;}
+  .ppage,.apage{box-shadow:none;margin:0;page-break-after:always;}
+}
+.phead{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #1a237e;padding-bottom:7px;margin-bottom:10px;}
+.phead h2{font-size:0.92rem;color:#1a237e;font-weight:700;}
+.phead .sc{border:1px solid #1a237e;padding:3px 10px;font-size:0.68rem;color:#1a237e;border-radius:3px;}
+.tcol{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;align-items:start;}
+.pb2{padding:6px 0;border-bottom:1px dashed #ddd;break-inside:avoid;page-break-inside:avoid;}
+.pb2:last-child{border-bottom:none;}
+.pnum{font-size:0.85rem;font-weight:700;color:#1a237e;margin-bottom:2px;}
+.pdir{font-size:0.63rem;color:#555;font-style:italic;margin-bottom:4px;line-height:1.4;}
+.pbox{border:1.5px solid #1a237e;border-radius:3px;padding:5px 8px;font-size:0.65rem;line-height:1.55;margin-bottom:5px;background:#f8f9ff;}
+.pbdy{font-size:0.65rem;line-height:1.65;margin-bottom:5px;text-align:justify;}
+.pbdy .mk{font-weight:700;color:#1a237e;}
+.pcho{list-style:none;font-size:0.63rem;line-height:1.65;}
+.pcho li{display:flex;gap:3px;margin-bottom:1px;}
+.pcho li b{flex-shrink:0;min-width:13px;color:#1a237e;}
+.ansline{border:1px solid #1a237e;border-radius:3px;padding:4px 8px;font-size:0.63rem;color:#1a237e;margin-top:4px;}
+/* 정답지 */
+.ahead{border-bottom:2px solid #c62828;padding-bottom:7px;margin-bottom:16px;}
+.ahead h2{font-size:0.95rem;color:#c62828;font-weight:700;}
+.ans-list{font-size:0.82rem;line-height:2;}
+.ans-list .ans-row{display:flex;flex-wrap:wrap;gap:0 24px;}
+.ans-list .ans-item{min-width:120px;}
+.ans-list .ans-item span{color:#c62828;font-weight:700;}
+.ans-divider{border:none;border-top:1px dashed #ddd;margin:8px 0;}
+</style>
+</head>
+<body>
+<header>
+  <h1>📝 영어 내신대비 문제 제작기</h1>
+  <button class="btn btn-o btn-sm" id="homeBtn" onclick="goHome()" style="display:none;">🏠 홈으로</button>
+</header>
+<div class="wrap">
+
+<!-- SCREEN 1: 홈 (그룹 목록) -->
+<section class="active" id="s1">
+  <div class="card">
+    <h2>📚 지문 그룹</h2>
+    <p class="info">그룹을 선택하여 지문을 관리하고 문제를 생성하세요.</p>
+    <div class="group-grid" id="groupGrid">
+      <div class="add-group-box" onclick="openAddGroup()">＋ 새 그룹 추가</div>
+    </div>
+  </div>
+</section>
+
+<!-- SCREEN 2: 그룹 내 지문 관리 -->
+<section id="s2">
+  <div class="card">
+    <h2 id="groupTitle">그룹명</h2>
+    <div class="row" style="margin-top:0;margin-bottom:12px;">
+      <button class="btn btn-b btn-sm" onclick="openAddPassage()">＋ 지문 추가</button>
+    </div>
+    <div class="passage-list" id="passageList"></div>
+  </div>
+  <div class="row">
+    <button class="btn btn-b" onclick="goToSelect()">✨ 문제 만들기 →</button>
+  </div>
+</section>
+
+<!-- SCREEN 3: 유형 & 지문 선택 -->
+<section id="s3">
+  <div class="card">
+    <h2>② 문제 유형 선택 (중복 가능)</h2>
+    <div class="tw">
+      <label class="tl" id="tlo"><input type="checkbox" id="cbo" onchange="tgl(this,'tlo')">🔀 문단 순서 배열</label>
+      <label class="tl" id="tli"><input type="checkbox" id="cbi" onchange="tgl(this,'tli')">📌 문장 삽입</label>
+      <label class="tl" id="tla"><input type="checkbox" id="cba" onchange="tgl(this,'tla')">📋 문장 순서 배열 (서답형)</label>
+    </div>
+    <p class="info" style="margin-top:8px;">※ 각 지문·유형 조합마다 <b>3문제씩</b> 자동 생성됩니다.</p>
+  </div>
+  <div class="card">
+    <h2>③ 지문 선택</h2>
+    <div style="margin-bottom:8px;">
+      <button class="sa" onclick="saAll(true)">전체선택</button>
+      <button class="sa" onclick="saAll(false)">전체해제</button>
+    </div>
+    <div class="pgw" id="pgGrid"></div>
+  </div>
+  <div class="row">
+    <button class="btn btn-o" onclick="goScreen(2)">← 이전</button>
+    <button class="btn btn-b" onclick="gen()">✨ 문제 생성</button>
+  </div>
+</section>
+
+<!-- SCREEN 4: 미리보기 & 인쇄 -->
+<section id="s4">
+  <div id="ctrlBar" class="row" style="margin-bottom:16px;align-items:center;">
+    <button class="btn btn-o" onclick="goScreen(3)">← 재설정</button>
+    <button class="btn btn-g" onclick="window.print()">🖨️ 인쇄 / PDF 저장</button>
+    <button class="btn btn-b" onclick="goHome()" style="margin-left:8px;">🏠 홈으로</button>
+    <span id="qcnt" style="margin-left:auto;font-size:0.83rem;font-weight:700;color:#1a237e;"></span>
+  </div>
+  <div id="hint" style="font-size:0.78rem;color:#555;margin-bottom:14px;background:#fffde7;border:1px solid #ffe082;border-radius:5px;padding:8px 12px;">
+    💡 <b>인쇄 버튼</b> 클릭 → 브라우저 인쇄창에서 <b>"PDF로 저장"</b> 선택
+  </div>
+  <div id="probPages"></div>
+  <div id="ansPage" style="margin-top:20px;"></div>
+</section>
+
+</div>
+
+<!-- 그룹 추가 모달 -->
+<div class="modal-bg" id="modalAddGroup">
+  <div class="modal">
+    <h3>새 그룹 추가</h3>
+    <label>그룹 이름</label>
+    <input type="text" id="newGroupName" placeholder="예) 1학기 중간고사, 수능특강 1강...">
+    <div class="row" style="justify-content:flex-end;margin-top:16px;">
+      <button class="btn btn-o btn-sm" onclick="closeModal('modalAddGroup')">취소</button>
+      <button class="btn btn-b btn-sm" onclick="addGroup()">추가</button>
+    </div>
+  </div>
+</div>
+
+<!-- 지문 추가/편집 모달 -->
+<div class="modal-bg" id="modalAddPassage">
+  <div class="modal">
+    <h3 id="passageModalTitle">지문 추가</h3>
+    <label>지문 번호</label>
+    <input type="number" id="newPassageNum" placeholder="예) 1" min="1" max="99" style="width:100%;border:1px solid #ccc;border-radius:5px;padding:8px 10px;font-size:0.88rem;">
+    <label>영어 본문 (한글 자동 제거됩니다)</label>
+    <textarea id="newPassageContent" placeholder="영어 본문을 입력하세요..."></textarea>
+    <div class="row" style="justify-content:flex-end;margin-top:16px;">
+      <button class="btn btn-o btn-sm" onclick="closeModal('modalAddPassage')">취소</button>
+      <button class="btn btn-b btn-sm" id="passageSaveBtn" onclick="savePassage()">저장</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── SUPABASE CONFIG ──
+var SB_URL='https://dommnhgspnacpqcmdsfn.supabase.co';
+var SB_KEY='sb_publishable_2-rOGWprFcE8lY1ntcWD8A_49GqWanU';
+
+async function sbFetch(path,method,body){
+  var opts={
+    method:method||'GET',
+    headers:{
+      'apikey':SB_KEY,
+      'Authorization':'Bearer '+SB_KEY,
+      'Content-Type':'application/json',
+      'Prefer': method==='POST'?'return=representation':''
+    }
+  };
+  if(body) opts.body=JSON.stringify(body);
+  var res=await fetch(SB_URL+'/rest/v1/'+path,opts);
+  if(!res.ok){
+    var err=await res.text();
+    throw new Error(err);
+  }
+  var text=await res.text();
+  return text?JSON.parse(text):[];
+}
+
+// ── STATE ──
+var currentGroup=null;
+var groupPassages=[];
+var passages=[];
+var problems=[];
+var ansData=[];
+var editingPassageId=null;
+
+// ── UI ──
+function goScreen(n){
+  document.querySelectorAll('section').forEach(function(s,i){
+    s.classList.toggle('active',i+1===n);
+  });
+  document.getElementById('homeBtn').style.display=n===1?'none':'inline-flex';
+  if(n===2) loadPassages();
+  if(n===3) renderGrid();
+}
+
+function goHome(){
+  currentGroup=null;
+  groupPassages=[];
+  passages=[];
+  problems=[];
+  ansData=[];
+  goScreen(1);
+  loadGroups();
+}
+
+function toast(msg,ms){
+  ms=ms||3000;
+  var t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},ms);
+}
+
+function tgl(cb,id){
+  document.getElementById(id).classList.toggle('on',cb.checked);
+}
+
+function openModal(id){document.getElementById(id).classList.add('show');}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+
+// ── GROUPS ──
+async function loadGroups(){
+  try{
+    var groups=await sbFetch('groups?select=*,passages(count)&order=created_at.asc');
+    var grid=document.getElementById('groupGrid');
+    grid.innerHTML='<div class="add-group-box" onclick="openAddGroup()">＋ 새 그룹 추가</div>';
+    groups.forEach(function(g){
+      var cnt=g.passages&&g.passages[0]?g.passages[0].count:0;
+      var card=document.createElement('div');
+      card.className='group-card';
+      card.innerHTML='<button class="del-btn" onclick="deleteGroup(event,\''+g.id+'\')">🗑</button>'
+        +'<h3>'+escHtml(g.name)+'</h3>'
+        +'<p>지문 '+cnt+'개</p>';
+      card.onclick=function(){openGroup(g);};
+      grid.insertBefore(card,grid.lastElementChild);
+    });
+  }catch(e){toast('❌ 그룹 로드 실패: '+e.message,5000);}
+}
+
+function openAddGroup(){
+  document.getElementById('newGroupName').value='';
+  openModal('modalAddGroup');
+}
+
+async function addGroup(){
+  var name=document.getElementById('newGroupName').value.trim();
+  if(!name){toast('❌ 그룹 이름을 입력하세요.');return;}
+  try{
+    await sbFetch('groups','POST',{name:name});
+    closeModal('modalAddGroup');
+    toast('✅ 그룹이 추가되었습니다!');
+    loadGroups();
+  }catch(e){toast('❌ 추가 실패: '+e.message,5000);}
+}
+
+async function deleteGroup(e,id){
+  e.stopPropagation();
+  if(!confirm('그룹과 모든 지문을 삭제할까요?')) return;
+  try{
+    await sbFetch('groups?id=eq.'+id,'DELETE');
+    toast('🗑 그룹이 삭제되었습니다.');
+    loadGroups();
+  }catch(e){toast('❌ 삭제 실패: '+e.message,5000);}
+}
+
+function openGroup(g){
+  currentGroup=g;
+  document.getElementById('groupTitle').textContent='📂 '+g.name;
+  goScreen(2);
+}
+
+// ── PASSAGES ──
+async function loadPassages(){
+  if(!currentGroup) return;
+  try{
+    groupPassages=await sbFetch('passages?group_id=eq.'+currentGroup.id+'&order=num.asc&select=*');
+    renderPassageList();
+  }catch(e){toast('❌ 지문 로드 실패: '+e.message,5000);}
+}
+
+function renderPassageList(){
+  var list=document.getElementById('passageList');
+  if(!groupPassages.length){
+    list.innerHTML='<p class="info">아직 지문이 없습니다. 위 버튼으로 추가하세요.</p>';
+    return;
+  }
+  list.innerHTML='';
+  groupPassages.forEach(function(p){
+    var row=document.createElement('div');
+    row.className='passage-row';
+    row.innerHTML='<span class="plabel">'+p.num+'번</span>'
+      +'<span class="pcontent">'+escHtml(p.content.slice(0,60))+'...</span>'
+      +'<div class="pbtn-wrap">'
+        +'<button class="btn btn-o btn-sm" onclick="editPassage(\''+p.id+'\')">수정</button>'
+        +'<button class="btn btn-r btn-sm" onclick="delPassage(\''+p.id+'\')">삭제</button>'
+      +'</div>';
+    list.appendChild(row);
+  });
+}
+
+function openAddPassage(){
+  editingPassageId=null;
+  document.getElementById('passageModalTitle').textContent='지문 추가';
+  document.getElementById('newPassageNum').value='';
+  document.getElementById('newPassageContent').value='';
+  document.getElementById('passageSaveBtn').textContent='저장';
+  openModal('modalAddPassage');
+}
+
+function editPassage(id){
+  var p=groupPassages.find(function(x){return x.id===id;});
+  if(!p) return;
+  editingPassageId=id;
+  document.getElementById('passageModalTitle').textContent='지문 수정';
+  document.getElementById('newPassageNum').value=p.num;
+  document.getElementById('newPassageContent').value=p.content;
+  document.getElementById('passageSaveBtn').textContent='수정 저장';
+  openModal('modalAddPassage');
+}
+
+async function savePassage(){
+  var num=parseInt(document.getElementById('newPassageNum').value);
+  var content=document.getElementById('newPassageContent').value.trim();
+  content=removeKorean(content);
+  if(!num||num<1){toast('❌ 지문 번호를 입력하세요.');return;}
+  if(!content||content.length<10){toast('❌ 본문을 입력하세요.');return;}
+  try{
+    if(editingPassageId){
+      await sbFetch('passages?id=eq.'+editingPassageId,'PATCH',{num:num,content:content,label:num+'번'});
+      toast('✅ 지문이 수정되었습니다!');
+    }else{
+      await sbFetch('passages','POST',{group_id:currentGroup.id,num:num,label:num+'번',content:content});
+      toast('✅ 지문이 저장되었습니다!');
+    }
+    closeModal('modalAddPassage');
+    loadPassages();
+  }catch(e){toast('❌ 저장 실패: '+e.message,5000);}
+}
+
+async function delPassage(id){
+  if(!confirm('이 지문을 삭제할까요?')) return;
+  try{
+    await sbFetch('passages?id=eq.'+id,'DELETE');
+    toast('🗑 삭제되었습니다.');
+    loadPassages();
+  }catch(e){toast('❌ 삭제 실패: '+e.message,5000);}
+}
+
+// ── 문제 만들기로 이동 ──
+function goToSelect(){
+  if(!groupPassages.length){toast('❌ 지문을 먼저 추가하세요.');return;}
+  // groupPassages → passages 변환
+  passages=groupPassages.map(function(p){
+    return{
+      label:p.num+'번',
+      num:p.num,
+      sents:splitS(p.content)
+    };
+  }).filter(function(p){return p.sents.length>=2;});
+  if(!passages.length){toast('❌ 유효한 지문이 없습니다.',4000);return;}
+  goScreen(3);
+}
+
+// ── GRID ──
+function renderGrid(){
+  var g=document.getElementById('pgGrid');
+  g.innerHTML='';
+  passages.forEach(function(p,i){
+    var d=document.createElement('div');
+    d.className='pi'; d.id='pi'+i;
+    d.innerHTML='<input type="checkbox" id="pc'+i+'" style="margin-right:4px;">'
+      +p.label+'<span style="font-size:0.68rem;color:#888;margin-left:3px;">('+p.sents.length+'문)</span>';
+    d.onclick=function(){
+      var c=document.getElementById('pc'+i);
+      c.checked=!c.checked;
+      d.classList.toggle('on',c.checked);
+    };
+    g.appendChild(d);
+  });
+}
+
+function saAll(v){
+  passages.forEach(function(_,i){
+    var c=document.getElementById('pc'+i);
+    var d=document.getElementById('pi'+i);
+    if(c&&d){c.checked=v; d.classList.toggle('on',v);}
+  });
+}
+
+// ── UTILS ──
+function shuf(a){
+  var b=a.slice();
+  for(var i=b.length-1;i>0;i--){
+    var j=Math.floor(Math.random()*(i+1));
+    var tmp=b[i];b[i]=b[j];b[j]=tmp;
+  }
+  return b;
+}
+
+function escHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function removeKorean(text){
+  return text.split('\n').filter(function(line){
+    var t=line.trim();
+    if(t.length===0) return true;
+    if(/[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(t)) return false;
+    return true;
+  }).join('\n');
+}
+
+function splitS(text){
+  var eng=text.replace(/[가-힣ㄱ-ㅎㅏ-ㅣ]+/g,'').trim();
+  var s=eng
+    .replace(/Mr\./g,'Mr@').replace(/Mrs\./g,'Mrs@').replace(/Dr\./g,'Dr@')
+    .replace(/St\./g,'St@').replace(/Jr\./g,'Jr@').replace(/Sr\./g,'Sr@')
+    .replace(/vs\./g,'vs@').replace(/e\.g\./g,'eg@').replace(/i\.e\./g,'ie@')
+    .replace(/etc\./g,'etc@').replace(/U\.S\./g,'US@').replace(/U\.K\./g,'UK@')
+    .replace(/([A-Z])\./g,'$1@')
+    .replace(/\n/g,' ').replace(/\s{2,}/g,' ');
+  return s.split(/(?<=[.!?])\s+(?=[A-Z"'(])/g)
+    .map(function(x){return x.replace(/@/g,'.').trim();})
+    .filter(function(x){return x.length>8&&/[a-zA-Z]/.test(x);});
+}
+
+// ── GENERATE ──
+function gen(){
+  var types=['o','i','a'].filter(function(t){
+    var el=document.getElementById('cb'+t);
+    return el&&el.checked;
+  });
+  var sel=passages.filter(function(_,i){
+    var c=document.getElementById('pc'+i);
+    return c&&c.checked;
+  });
+  if(!types.length){toast('❌ 유형을 선택하세요.');return;}
+  if(!sel.length){toast('❌ 지문을 선택하세요.');return;}
+  problems=[]; ansData=[];
+  var qn=1;
+  sel.forEach(function(p){
+    types.forEach(function(t){
+      for(var rep=0;rep<3;rep++){
+        var pr=null;
+	if(t==='o'&&p.sents.length>=4) pr=mkOrder(p);
+        else if(t==='i'&&p.sents.length>=5) pr=mkInsert(p);
+        else if(t==='a'&&p.sents.length>=2) pr=mkArrange(p);
+        if(pr){
+          problems.push({
+            qNum:qn, type:t, label:p.label,
+            given:pr.given, parts:pr.parts,
+            choices:pr.choices, answer:pr.answer,
+            inserted:pr.inserted, body:pr.body,
+            first:pr.first, shuffled:pr.shuffled
+          });
+          ansData.push({qNum:qn, ans:pr.answer, label:p.label});
+          qn++;
+        }
+      }
+    });
+  });
+  if(!problems.length){toast('⚠️ 생성된 문제 없음. 지문 길이를 확인하세요.',4000);return;}
+  renderAll();
+  goScreen(4);
+  document.getElementById('qcnt').textContent='총 '+problems.length+'문제';
+  toast('✅ '+problems.length+'문제 생성 완료!');
+}
+
+// ── 유형1: 문단 순서 배열 ──
+function mkOrder(p){
+  var s=p.sents, n=s.length;
+  var i1=Math.ceil(n/4);
+  var i2=i1+Math.ceil((n-i1)/3);
+  var i3=i2+Math.ceil((n-i2)/2);
+  var given=s.slice(0,i1).join(' ');
+  var orig=[
+    {id:'A', text:s.slice(i1,i2).join(' ')},
+    {id:'B', text:s.slice(i2,i3).join(' ')},
+    {id:'C', text:s.slice(i3).join(' ')}
+  ];
+  var allWrong=[['A','C','B'],['B','A','C'],['B','C','A'],['C','A','B'],['C','B','A']];
+  var ansPos=Math.floor(Math.random()*5);
+  var wrongs=shuf(allWrong.slice()).slice(0,4);
+  var choices=wrongs.slice();
+  choices.splice(ansPos,0,['A','B','C']);
+  return{
+    given:given,
+    parts:shuf(orig.slice()),
+    choices:choices.map(function(c){return c.join(' - ');}),
+    answer:ansPos+1
+  };
+}
+
+// ── 유형2: 문장 삽입 ──
+function mkInsert(p){
+  var s=p.sents;
+  var pickIdx=Math.floor(Math.random()*(s.length-1))+1;
+  var inserted=s[pickIdx];
+  var rest=s.filter(function(_,i){return i!==pickIdx;});
+  var ansSlot=Math.min(pickIdx,rest.length);
+  var pool=[];
+  for(var i=1;i<=rest.length;i++) pool.push(i);
+  pool=pool.filter(function(x){return x!==ansSlot;});
+  pool=shuf(pool);
+  var slots=[ansSlot].concat(pool.slice(0,4)).sort(function(a,b){return a-b;});
+  var ansChoice=slots.indexOf(ansSlot)+1;
+  var body='';
+  rest.forEach(function(sen,i){
+    body+=sen+' ';
+    var mIdx=slots.indexOf(i+1);
+    if(mIdx>=0) body+='<span class="mk">('+( mIdx+1)+')</span> ';
+  });
+  return{inserted:inserted, body:body.trim(), answer:ansChoice};
+}
+
+// ── 유형3: 문장 순서 배열 (서답형) ──
+function mkArrange(p){
+  var first=p.sents[0];
+  var rest=p.sents.slice(1);
+  var labeled=rest.map(function(t,i){
+    return{id:String.fromCharCode(66+i), text:t};
+  });
+  var shuffled=shuf(labeled.slice());
+  var answerStr=labeled.map(function(x){return x.id;}).join(' - ');
+  return{
+    first:first,
+    shuffled:shuffled,
+    answer:answerStr
+  };
+}
+
+// ── 전체 렌더링 ──
+function renderAll(){
+  var pp=document.getElementById('probPages');
+  var ap=document.getElementById('ansPage');
+  pp.innerHTML=''; ap.innerHTML='';
+  var ci=['①','②','③','④','⑤'];
+
+  // 문제지: 2문제씩 한 페이지
+  for(var i=0;i<problems.length;i+=2){
+    var pg=document.createElement('div');
+    pg.className='ppage';
+    pg.innerHTML=
+      '<div class="phead">'
+        +'<h2>영어 내신 대비 문제 — '+(currentGroup?escHtml(currentGroup.name):'')+'</h2>'
+        +'<div class="sc">이름:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 점수: ______</div>'
+      +'</div>'
+      +'<div class="tcol">'
+        +'<div id="ca'+i+'"></div>'
+        +'<div id="cb'+i+'"></div>'
+      +'</div>';
+    pp.appendChild(pg);
+    document.getElementById('ca'+i).innerHTML=pHTML(problems[i],ci);
+    if(problems[i+1]) document.getElementById('cb'+i).innerHTML=pHTML(problems[i+1],ci);
+  }
+
+  // ── 정답지 ──
+  var ah='<div class="apage">'
+    +'<div class="ahead"><h2>✅ 정답 — '+(currentGroup?escHtml(currentGroup.name):'')+'</h2></div>'
+    +'<div class="ans-list">';
+
+  ansData.forEach(function(a, idx){
+    // 10개마다 구분선
+    if(idx>0 && idx%10===0){
+      ah+='</div><hr class="ans-divider"><div class="ans-row">';
+    } else if(idx%10===0){
+      ah+='<div class="ans-row">';
+    }
+    ah+='<div class="ans-item">'+a.qNum+'번) <span>'+a.ans+'</span></div>';
+    // 행 마지막
+    if(idx%10===9 || idx===ansData.length-1){
+      ah+='</div>';
+    }
+  });
+
+  ah+='</div></div>';
+  ap.innerHTML=ah;
+}
+
+// ── 문제 HTML ──
+function pHTML(p,ci){
+  var h='<div class="pb2"><div class="pnum">['+p.qNum+']</div>';
+  if(p.type==='o'){
+    h+='<div class="pdir">['+p.label+'] 주어진 글 다음에 이어질 글의 순서로 가장 적절한 것은?</div>';
+    h+='<div class="pbox">'+p.given+'</div>';
+    h+='<div class="pbdy">';
+    p.parts.forEach(function(pt){
+      h+='<b>('+pt.id+')</b> '+pt.text+'<br><br>';
+    });
+    h+='</div>';
+    h+='<ul class="pcho">';
+    p.choices.forEach(function(c,i){
+      h+='<li><b>'+ci[i]+'</b> '+c+'</li>';
+    });
+    h+='</ul>';
+  } else if(p.type==='i'){
+    h+='<div class="pdir">['+p.label+'] 글의 흐름으로 보아, 주어진 문장이 들어가기에 가장 적절한 곳은?</div>';
+    h+='<div class="pbox">'+p.inserted+'</div>';
+    h+='<div class="pbdy">'+p.body+'</div>';
+    h+='<ul class="pcho">';
+    ci.forEach(function(c,i){
+      h+='<li><b>'+c+'</b> ('+(i+1)+')</li>';
+    });
+    h+='</ul>';
+  } else if(p.type==='a'){
+    h+='<div class="pdir">['+p.label+'] 주어진 글 다음에 이어질 문장들을 순서에 맞게 배열하여 기호로 쓰시오.</div>';
+    h+='<div class="pbox">(A) '+p.first+'</div>';
+    h+='<div class="pbdy">';
+    p.shuffled.forEach(function(s){
+      h+='<b>('+s.id+')</b> '+s.text+'<br><br>';
+    });
+    h+='</div>';
+    h+='<div class="ansline">답: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>';
+  }
+  h+='</div>';
+  return h;
+}
+
+// ── 초기 로드 ──
+loadGroups();
+</script>
+</body>
+</html>
