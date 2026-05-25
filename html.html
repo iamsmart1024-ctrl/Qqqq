@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#0a0e1a" />
+<title>쪽잠 · Power Nap</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@200;300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg-0: #08091a;
+    --bg-1: #0d1126;
+    --bg-2: #141934;
+    --ink: #f3ead4;
+    --ink-dim: #b6b3c6;
+    --ink-muted: #6f6f8a;
+    --gold: #e8b873;
+    --gold-soft: rgba(232, 184, 115, 0.16);
+    --gold-line: rgba(232, 184, 115, 0.25);
+    --rose: #f5a98a;
+    --danger: #e85d4c;
+    --good: #8acc9e;
+    --stroke: rgba(243, 234, 212, 0.08);
+    --surface: rgba(20, 25, 52, 0.55);
+
+    --serif: "Cormorant Garamond", "Gowun Batang", serif;
+    --korean-serif: "Gowun Batang", "Cormorant Garamond", serif;
+    --sans: "IBM Plex Sans KR", system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
+    font-family: var(--sans);
+    color: var(--ink);
+    background: var(--bg-0);
+    min-height: 100dvh;
+    position: relative;
+    overflow-x: hidden;
+    line-height: 1.5;
+    font-weight: 300;
+    letter-spacing: 0.01em;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
+  /* Atmospheric background — radial gradient + stars + grain */
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(1200px 800px at 70% -10%, rgba(232, 184, 115, 0.08), transparent 60%),
+      radial-gradient(900px 700px at 10% 110%, rgba(110, 90, 200, 0.10), transparent 55%),
+      linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 50%, #050614 100%);
+    z-index: -2;
+  }
+  body::after {
+    content: "";
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 0.95 0 0 0 0 0.85 0 0 0 0.5 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.18'/></svg>");
+    opacity: 0.35;
+    mix-blend-mode: overlay;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  .stars {
+    position: fixed; inset: 0; pointer-events: none; z-index: -1;
+    overflow: hidden;
+  }
+  .stars i {
+    position: absolute;
+    width: 2px; height: 2px;
+    background: #fff;
+    border-radius: 50%;
+    opacity: 0.5;
+    animation: twinkle 4s infinite ease-in-out;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.2; transform: scale(0.7); }
+    50% { opacity: 0.9; transform: scale(1.1); }
+  }
+
+  /* ---------- Layout ---------- */
+
+  .app {
+    max-width: 540px;
+    margin: 0 auto;
+    padding: 28px 22px 60px;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---------- Header ---------- */
+
+  header.intro {
+    text-align: center;
+    margin-bottom: 28px;
+    padding-top: 8px;
+  }
+  .crest {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 11px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 14px;
+    font-weight: 400;
+  }
+  .crest::before, .crest::after {
+    content: ""; width: 28px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold) 50%, transparent);
+  }
+  h1.title {
+    font-family: var(--korean-serif);
+    font-weight: 700;
+    font-size: clamp(44px, 12vw, 64px);
+    line-height: 1;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+  h1.title em {
+    font-family: var(--serif);
+    font-style: italic;
+    font-weight: 400;
+    color: var(--gold);
+    font-size: 0.55em;
+    margin-left: 8px;
+    letter-spacing: 0.02em;
+    vertical-align: 0.2em;
+  }
+  .subtitle {
+    font-size: 13px;
+    color: var(--ink-dim);
+    margin-top: 10px;
+    font-weight: 300;
+    letter-spacing: 0.06em;
+  }
+
+  /* ---------- Surface cards ---------- */
+
+  .card {
+    background: var(--surface);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    border: 1px solid var(--stroke);
+    border-radius: 18px;
+    padding: 18px 18px;
+    margin-bottom: 14px;
+    position: relative;
+  }
+
+  .card .label {
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card .label::before {
+    content: "";
+    width: 4px; height: 4px; border-radius: 50%;
+    background: var(--gold);
+  }
+
+  /* ---------- Audio output card ---------- */
+
+  .audio-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .audio-icon {
+    width: 42px; height: 42px;
+    flex-shrink: 0;
+    border-radius: 12px;
+    background: var(--gold-soft);
+    display: grid; place-items: center;
+    border: 1px solid var(--gold-line);
+  }
+  .audio-icon svg { width: 22px; height: 22px; stroke: var(--gold); fill: none; stroke-width: 1.5; }
+  .audio-info { flex: 1; min-width: 0; }
+  .audio-info .status {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--ink);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .audio-info .hint {
+    font-size: 12px;
+    color: var(--ink-muted);
+    font-weight: 300;
+  }
+  .audio-info .hint.warn { color: var(--rose); }
+  .audio-info .hint.ok { color: var(--good); }
+
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--gold-line);
+    color: var(--gold);
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+  .btn-ghost:hover { background: var(--gold-soft); }
+  .btn-ghost:active { transform: scale(0.97); }
+
+  /* ---------- Duration picker ---------- */
+
+  .presets {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .preset {
+    background: transparent;
+    border: 1px solid var(--stroke);
+    color: var(--ink-dim);
+    padding: 14px 0 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: var(--sans);
+    font-weight: 300;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .preset .num {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--ink);
+    line-height: 1;
+  }
+  .preset .unit { font-size: 10px; color: var(--ink-muted); letter-spacing: 0.1em; }
+  .preset:hover { border-color: var(--gold-line); }
+  .preset.active {
+    background: var(--gold-soft);
+    border-color: var(--gold);
+  }
+  .preset.active .num { color: var(--gold); }
+  .preset.active .unit { color: var(--gold); }
+
+  .custom-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 4px 4px 0;
+  }
+  .custom-row label {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    white-space: nowrap;
+  }
+  input[type="range"] {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 2px;
+    background: var(--stroke);
+    border-radius: 2px;
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--gold);
+    cursor: pointer;
+    box-shadow: 0 0 0 4px rgba(232, 184, 115, 0.15);
+    transition: transform 0.15s;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+  input[type="range"]::-moz-range-thumb {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--gold);
+    cursor: pointer;
+    border: none;
+  }
+  .custom-val {
+    font-family: var(--serif);
+    font-size: 20px;
+    color: var(--gold);
+    min-width: 56px;
+    text-align: right;
+  }
+  .custom-val span { font-size: 11px; color: var(--ink-muted); font-family: var(--sans); margin-left: 3px; }
+
+  /* ---------- Options ---------- */
+
+  .opts {
+    display: grid;
+    gap: 10px;
+  }
+  .opt {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 4px 2px;
+  }
+  .opt-text { display: flex; flex-direction: column; }
+  .opt-text strong { font-weight: 400; font-size: 14px; color: var(--ink); }
+  .opt-text small { font-size: 11px; color: var(--ink-muted); margin-top: 2px; }
+
+  /* Toggle */
+  .toggle { position: relative; width: 42px; height: 24px; }
+  .toggle input { display: none; }
+  .toggle .slider {
+    position: absolute; inset: 0;
+    background: rgba(243, 234, 212, 0.08);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border: 1px solid var(--stroke);
+  }
+  .toggle .slider::before {
+    content: "";
+    position: absolute;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--ink-dim);
+    top: 3px; left: 3px;
+    transition: all 0.2s;
+  }
+  .toggle input:checked + .slider {
+    background: var(--gold-soft);
+    border-color: var(--gold);
+  }
+  .toggle input:checked + .slider::before {
+    background: var(--gold);
+    transform: translateX(18px);
+  }
+
+  /* ---------- Start button ---------- */
+
+  .start-area {
+    margin-top: 18px;
+    margin-bottom: 6px;
+  }
+  .btn-primary {
+    width: 100%;
+    background: linear-gradient(180deg, #1a2244 0%, #0f1530 100%);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    padding: 22px;
+    border-radius: 18px;
+    font-family: var(--korean-serif);
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(232, 184, 115, 0.1), inset 0 1px 0 rgba(232, 184, 115, 0.18);
+  }
+  .btn-primary::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(232, 184, 115, 0.2), transparent 60%);
+    opacity: 0.7;
+    pointer-events: none;
+  }
+  .btn-primary:hover {
+    color: #fff;
+    box-shadow: 0 12px 40px rgba(232, 184, 115, 0.18), inset 0 1px 0 rgba(232, 184, 115, 0.3);
+  }
+  .btn-primary:active { transform: scale(0.99); }
+
+  .small-actions {
+    display: flex;
+    justify-content: center;
+    gap: 18px;
+    margin-top: 14px;
+  }
+  .small-actions button {
+    background: none;
+    border: none;
+    color: var(--ink-muted);
+    font-family: var(--sans);
+    font-size: 12px;
+    cursor: pointer;
+    padding: 6px 0;
+    letter-spacing: 0.04em;
+    transition: color 0.2s;
+    text-decoration: underline;
+    text-decoration-color: var(--stroke);
+    text-underline-offset: 4px;
+  }
+  .small-actions button:hover { color: var(--gold); text-decoration-color: var(--gold-line); }
+
+  /* ---------- Sleep screen ---------- */
+
+  .screen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-0);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    z-index: 10;
+    animation: fadeIn 0.4s ease;
+  }
+  .screen.active { display: flex; }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* Sleeping state */
+  .screen.sleeping {
+    background: radial-gradient(ellipse at center, #0f1330 0%, #050614 70%);
+  }
+  .screen.sleeping.dim {
+    background: #000;
+  }
+  .screen.sleeping.dim .countdown,
+  .screen.sleeping.dim .ring-wrap,
+  .screen.sleeping.dim .sleep-hint,
+  .screen.sleeping.dim .end-time,
+  .screen.sleeping.dim .stop-btn {
+    opacity: 0.18;
+    transition: opacity 0.5s;
+  }
+  .screen.sleeping.dim:active .countdown,
+  .screen.sleeping.dim:active .ring-wrap,
+  .screen.sleeping.dim:active .sleep-hint,
+  .screen.sleeping.dim:active .end-time,
+  .screen.sleeping.dim:active .stop-btn {
+    opacity: 1;
+  }
+
+  .ring-wrap {
+    position: relative;
+    width: min(82vw, 360px);
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    margin-bottom: 32px;
+  }
+  .ring-wrap svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+  .ring-bg { stroke: var(--stroke); fill: none; }
+  .ring-fg {
+    stroke: var(--gold);
+    fill: none;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s linear;
+    filter: drop-shadow(0 0 8px rgba(232, 184, 115, 0.4));
+  }
+  .countdown {
+    font-family: var(--serif);
+    font-size: clamp(64px, 18vw, 110px);
+    font-weight: 300;
+    line-height: 1;
+    color: var(--ink);
+    letter-spacing: -0.03em;
+    text-align: center;
+    z-index: 2;
+    font-feature-settings: "tnum" 1;
+  }
+  .countdown .sep {
+    color: var(--gold);
+    margin: 0 -0.05em;
+    animation: blink 2s infinite;
+  }
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    50.01%, 100% { opacity: 0.3; }
+  }
+  .sleep-hint {
+    font-family: var(--korean-serif);
+    font-size: 16px;
+    color: var(--ink-dim);
+    margin-bottom: 8px;
+    letter-spacing: 0.08em;
+    font-weight: 400;
+  }
+  .end-time {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--gold);
+    font-size: 15px;
+    margin-bottom: 36px;
+    opacity: 0.85;
+  }
+
+  .stop-btn {
+    background: transparent;
+    border: 1px solid var(--stroke);
+    color: var(--ink-dim);
+    padding: 14px 32px;
+    border-radius: 999px;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 300;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .stop-btn:hover {
+    color: var(--rose);
+    border-color: var(--rose);
+  }
+
+  /* Breathing animation */
+  .breathing {
+    position: absolute;
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(232, 184, 115, 0.06) 0%, transparent 70%);
+    animation: breathe 6s infinite ease-in-out;
+  }
+  @keyframes breathe {
+    0%, 100% { transform: scale(0.9); opacity: 0.4; }
+    50% { transform: scale(1.05); opacity: 0.9; }
+  }
+
+  /* ---------- Alarm screen ---------- */
+
+  .screen.alarm {
+    background: linear-gradient(180deg, #2a0f12 0%, #1a0508 100%);
+    animation: alarmPulse 0.8s infinite alternate ease-in-out;
+  }
+  @keyframes alarmPulse {
+    from { background: linear-gradient(180deg, #2a0f12 0%, #1a0508 100%); }
+    to { background: linear-gradient(180deg, #5a1d20 0%, #2d0810 100%); }
+  }
+
+  .alarm-title {
+    font-family: var(--korean-serif);
+    font-weight: 700;
+    font-size: clamp(56px, 16vw, 92px);
+    color: #fff;
+    line-height: 0.95;
+    text-align: center;
+    text-shadow: 0 0 40px rgba(245, 169, 138, 0.5);
+    margin-bottom: 12px;
+    animation: shake 0.15s infinite;
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
+  }
+  .alarm-sub {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--rose);
+    font-size: 20px;
+    text-align: center;
+    margin-bottom: 52px;
+  }
+  .alarm-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: min(82vw, 360px);
+  }
+  .btn-stop-alarm {
+    background: var(--ink);
+    color: var(--bg-0);
+    border: none;
+    padding: 22px;
+    border-radius: 18px;
+    font-family: var(--korean-serif);
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: transform 0.1s;
+    box-shadow: 0 12px 40px rgba(255, 255, 255, 0.18);
+  }
+  .btn-stop-alarm:active { transform: scale(0.97); }
+  .btn-snooze {
+    background: transparent;
+    color: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    padding: 16px;
+    border-radius: 14px;
+    font-family: var(--sans);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-snooze:hover { color: #fff; border-color: rgba(255, 255, 255, 0.4); }
+
+  /* ---------- Toast ---------- */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--ink);
+    color: var(--bg-0);
+    padding: 12px 20px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 400;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.4, 1);
+    z-index: 100;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ---------- Footer ---------- */
+  footer.tips {
+    margin-top: auto;
+    padding-top: 28px;
+    text-align: center;
+    color: var(--ink-muted);
+    font-size: 11px;
+    line-height: 1.7;
+    letter-spacing: 0.04em;
+  }
+  footer.tips em {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--gold);
+    font-size: 13px;
+  }
+  footer.tips .divider {
+    width: 40px;
+    height: 1px;
+    background: var(--stroke);
+    margin: 14px auto;
+  }
+
+  /* Small screens */
+  @media (max-width: 380px) {
+    .presets { grid-template-columns: repeat(3, 1fr); }
+    .app { padding: 22px 16px 40px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<main class="app">
+
+  <header class="intro">
+    <div class="crest">Studia Nocturna</div>
+    <h1 class="title">쪽잠<em>nap</em></h1>
+    <p class="subtitle">짧고 깊게. 다시 책상 앞으로.</p>
+  </header>
+
+  <!-- Audio Output -->
+  <section class="card audio-card" id="audioCard">
+    <div class="audio-icon">
+      <svg viewBox="0 0 24 24" id="audioSvg"><path d="M3 14v-3a9 9 0 0 1 18 0v3"/><path d="M21 14v3a2 2 0 0 1-2 2h-2v-7h4z"/><path d="M3 14v3a2 2 0 0 0 2 2h2v-7H3z"/></svg>
+    </div>
+    <div class="audio-info">
+      <div class="status" id="audioStatus">오디오 출력 확인 중…</div>
+      <div class="hint" id="audioHint">기기 스피커로 큰 소리가 날 수 있습니다.</div>
+    </div>
+    <button class="btn-ghost" id="audioBtn">변경</button>
+  </section>
+
+  <!-- Duration -->
+  <section class="card">
+    <div class="label">잠들 시간</div>
+    <div class="presets" id="presets">
+      <button class="preset" data-min="10"><span class="num">10</span><span class="unit">분</span></button>
+      <button class="preset active" data-min="15"><span class="num">15</span><span class="unit">분</span></button>
+      <button class="preset" data-min="20"><span class="num">20</span><span class="unit">분</span></button>
+      <button class="preset" data-min="25"><span class="num">25</span><span class="unit">분</span></button>
+      <button class="preset" data-min="30"><span class="num">30</span><span class="unit">분</span></button>
+    </div>
+    <div class="custom-row">
+      <label>직접 설정</label>
+      <input type="range" id="customRange" min="1" max="60" step="1" value="15" />
+      <div class="custom-val"><span id="customVal">15</span><span>분</span></div>
+    </div>
+  </section>
+
+  <!-- Options -->
+  <section class="card">
+    <div class="label">옵션</div>
+    <div class="opts">
+      <div class="opt">
+        <div class="opt-text">
+          <strong>화면 잠금 방지</strong>
+          <small>잠든 사이 타이머가 멈추지 않도록</small>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="optWakeLock" checked />
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="opt">
+        <div class="opt-text">
+          <strong>진동도 함께</strong>
+          <small>알람 울릴 때 진동 추가 (모바일)</small>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="optVibrate" checked />
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="opt">
+        <div class="opt-text">
+          <strong>점진적 시작</strong>
+          <small>마지막 10초간 작은 소리로 미리 알림</small>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="optWarmup" checked />
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="opt">
+        <div class="opt-text">
+          <strong>화면 어둡게</strong>
+          <small>30초 후 화면을 어둡게 (탭하면 다시 밝아짐)</small>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="optDim" checked />
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+  </section>
+
+  <!-- Start -->
+  <div class="start-area">
+    <button class="btn-primary" id="startBtn">잠 들 기</button>
+    <div class="small-actions">
+      <button id="testBtn">🔊 알람 소리 1초 테스트</button>
+    </div>
+  </div>
+
+  <footer class="tips">
+    <em>"휴식은 시간 낭비가 아니다."</em>
+    <div class="divider"></div>
+    가장 효과적인 쪽잠은 10~20분.<br/>
+    그 이상은 깊은 잠으로 들어가 깨기 어려워집니다.
+  </footer>
+
+</main>
+
+<!-- Sleeping screen -->
+<div class="screen sleeping" id="sleepScreen">
+  <div class="ring-wrap">
+    <div class="breathing"></div>
+    <svg viewBox="0 0 200 200">
+      <circle class="ring-bg" cx="100" cy="100" r="92" stroke-width="2"/>
+      <circle class="ring-fg" id="ringFg" cx="100" cy="100" r="92" stroke-width="2"
+              stroke-dasharray="578.05" stroke-dashoffset="0"/>
+    </svg>
+    <div class="countdown" id="countdown">15<span class="sep">:</span>00</div>
+  </div>
+  <div class="sleep-hint">잠들기까지의 시간</div>
+  <div class="end-time" id="endTime">― 알람 예정 ―</div>
+  <button class="stop-btn" id="cancelBtn">취소</button>
+</div>
+
+<!-- Alarm screen -->
+<div class="screen alarm" id="alarmScreen">
+  <div class="alarm-title">일어나요</div>
+  <div class="alarm-sub">― 다시 공부하러 가요 ―</div>
+  <div class="alarm-actions">
+    <button class="btn-stop-alarm" id="stopAlarmBtn">알람 끄기</button>
+    <button class="btn-snooze" id="snoozeBtn">5분만 더 자기</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  "use strict";
+
+  // ---------- Stars ----------
+  const starsEl = document.getElementById("stars");
+  for (let i = 0; i < 40; i++) {
+    const s = document.createElement("i");
+    s.style.left = Math.random() * 100 + "%";
+    s.style.top = Math.random() * 100 + "%";
+    s.style.opacity = (Math.random() * 0.6 + 0.2).toFixed(2);
+    s.style.animationDelay = (Math.random() * 4).toFixed(1) + "s";
+    s.style.animationDuration = (Math.random() * 3 + 3).toFixed(1) + "s";
+    starsEl.appendChild(s);
+  }
+
+  // ---------- State ----------
+  const state = {
+    durationMin: 15,
+    targetTime: null,
+    rafId: null,
+    intervalId: null,
+    wakeLock: null,
+    audioCtx: null,
+    selectedSinkId: null,
+    selectedSinkLabel: null,
+    isAlarming: false,
+    alarmOscillators: [],
+    alarmGainNode: null,
+    alarmHtmlAudio: null,
+    dimTimer: null,
+    warmupTriggered: false,
+  };
+
+  // ---------- DOM ----------
+  const $ = (id) => document.getElementById(id);
+  const presetsEl = $("presets");
+  const customRange = $("customRange");
+  const customVal = $("customVal");
+  const startBtn = $("startBtn");
+  const cancelBtn = $("cancelBtn");
+  const stopAlarmBtn = $("stopAlarmBtn");
+  const snoozeBtn = $("snoozeBtn");
+  const testBtn = $("testBtn");
+  const audioBtn = $("audioBtn");
+  const audioStatus = $("audioStatus");
+  const audioHint = $("audioHint");
+  const sleepScreen = $("sleepScreen");
+  const alarmScreen = $("alarmScreen");
+  const countdownEl = $("countdown");
+  const ringFg = $("ringFg");
+  const endTimeEl = $("endTime");
+  const toast = $("toast");
+  const optWakeLock = $("optWakeLock");
+  const optVibrate = $("optVibrate");
+  const optWarmup = $("optWarmup");
+  const optDim = $("optDim");
+
+  const RING_CIRC = 2 * Math.PI * 92; // matches svg r=92
+
+  // ---------- Toast ----------
+  let toastTimer;
+  function showToast(msg, ms = 2200) {
+    toast.textContent = msg;
+    toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove("show"), ms);
+  }
+
+  // ---------- Duration ----------
+  function setDuration(min) {
+    state.durationMin = Math.max(1, Math.min(60, Math.round(min)));
+    customRange.value = state.durationMin;
+    customVal.textContent = state.durationMin;
+    [...presetsEl.children].forEach((b) => {
+      b.classList.toggle("active", parseInt(b.dataset.min, 10) === state.durationMin);
+    });
+  }
+
+  presetsEl.addEventListener("click", (e) => {
+    const btn = e.target.closest(".preset");
+    if (!btn) return;
+    setDuration(parseInt(btn.dataset.min, 10));
+  });
+  customRange.addEventListener("input", () => {
+    setDuration(parseInt(customRange.value, 10));
+  });
+
+  // ---------- Audio output detection ----------
+
+  const HEADPHONE_KEYWORDS = [
+    "headphone", "headset", "earbud", "earphone", "airpod", "buds", "bluetooth",
+    "이어폰", "헤드폰", "헤드셋", "에어팟", "버즈"
+  ];
+  const SPEAKER_KEYWORDS = ["speaker", "스피커", "내장", "built-in", "internal"];
+
+  function classifyDevice(label) {
+    if (!label) return "unknown";
+    const l = label.toLowerCase();
+    if (HEADPHONE_KEYWORDS.some((k) => l.includes(k))) return "headphones";
+    if (SPEAKER_KEYWORDS.some((k) => l.includes(k))) return "speaker";
+    return "unknown";
+  }
+
+  function updateAudioUI(deviceLabel, kind) {
+    state.selectedSinkLabel = deviceLabel;
+    if (!deviceLabel) {
+      audioStatus.textContent = "기본 출력 장치";
+      audioHint.textContent = "이어폰 연결 시 보통 자동으로 이어폰으로 전환됩니다.";
+      audioHint.className = "hint";
+    } else {
+      audioStatus.textContent = deviceLabel;
+      if (kind === "headphones") {
+        audioHint.textContent = "✓ 이어폰/헤드셋으로 알람이 울립니다.";
+        audioHint.className = "hint ok";
+      } else if (kind === "speaker") {
+        audioHint.textContent = "⚠ 기기 스피커로 큰 소리가 울립니다.";
+        audioHint.className = "hint warn";
+      } else {
+        audioHint.textContent = "이 장치로 알람이 울립니다.";
+        audioHint.className = "hint";
+      }
+    }
+  }
+
+  async function detectInitialOutput() {
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+        updateAudioUI(null, "unknown");
+        return;
+      }
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const outputs = devices.filter((d) => d.kind === "audiooutput" && d.label);
+      const headphones = outputs.find((d) => classifyDevice(d.label) === "headphones");
+      if (headphones) {
+        state.selectedSinkId = headphones.deviceId;
+        updateAudioUI(headphones.label, "headphones");
+        return;
+      }
+      updateAudioUI(null, "unknown");
+    } catch (e) {
+      updateAudioUI(null, "unknown");
+    }
+  }
+
+  async function pickAudioOutput() {
+    try {
+      // Prefer the explicit picker if available
+      if (navigator.mediaDevices && navigator.mediaDevices.selectAudioOutput) {
+        const device = await navigator.mediaDevices.selectAudioOutput();
+        state.selectedSinkId = device.deviceId;
+        updateAudioUI(device.label || "선택한 장치", classifyDevice(device.label));
+        showToast("출력 장치가 설정되었습니다");
+        return;
+      }
+      // Fallback: list available outputs and let user pick
+      if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+        showToast("이 브라우저는 출력 장치 선택을 지원하지 않습니다");
+        return;
+      }
+      // Request mic permission briefly to unlock device labels
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (_) { /* allowed to fail */ }
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      if (stream) stream.getTracks().forEach((t) => t.stop());
+
+      const outputs = devices.filter((d) => d.kind === "audiooutput");
+      if (!outputs.length) {
+        showToast("사용 가능한 출력 장치가 없습니다");
+        return;
+      }
+      const labels = outputs.map((d, i) => `${i + 1}. ${d.label || "장치 " + (i + 1)}`).join("\n");
+      const idxStr = prompt("출력 장치를 선택하세요 (번호 입력):\n\n" + labels);
+      const idx = parseInt(idxStr, 10) - 1;
+      if (Number.isInteger(idx) && outputs[idx]) {
+        state.selectedSinkId = outputs[idx].deviceId;
+        updateAudioUI(outputs[idx].label, classifyDevice(outputs[idx].label));
+        showToast("출력 장치가 설정되었습니다");
+      }
+    } catch (e) {
+      console.warn(e);
+      showToast("출력 장치를 선택하지 못했습니다");
+    }
+  }
+
+  audioBtn.addEventListener("click", pickAudioOutput);
+
+  // Listen for device changes (e.g., earphones plugged/unplugged)
+  if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+    navigator.mediaDevices.addEventListener("devicechange", async () => {
+      if (state.selectedSinkId) return; // user already chose
+      await detectInitialOutput();
+    });
+  }
+
+  // ---------- Audio Context & Alarm ----------
+
+  function getAudioCtx() {
+    if (!state.audioCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      state.audioCtx = new AC();
+    }
+    if (state.audioCtx.state === "suspended") state.audioCtx.resume();
+    return state.audioCtx;
+  }
+
+  async function applySinkId(ctxOrAudio) {
+    if (!state.selectedSinkId) return;
+    try {
+      if (ctxOrAudio.setSinkId) {
+        await ctxOrAudio.setSinkId(state.selectedSinkId);
+      }
+    } catch (e) {
+      console.warn("setSinkId failed:", e);
+    }
+  }
+
+  // Generate a single short beep for testing
+  async function playTestBeep() {
+    const ctx = getAudioCtx();
+    await applySinkId(ctx);
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "square";
+    osc.frequency.value = 880;
+    gain.gain.value = 0;
+    gain.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 0.02);
+    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.95);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 1.0);
+    showToast("테스트 소리 재생 중…", 1200);
+  }
+  testBtn.addEventListener("click", playTestBeep);
+
+  // Start LOUD alarm — pulsing two-tone square waves
+  async function startAlarm() {
+    const ctx = getAudioCtx();
+    await applySinkId(ctx);
+    stopAlarmOscillators();
+
+    const master = ctx.createGain();
+    master.gain.value = 0.85; // loud but not clipping; web audio normalized 0-1
+    master.connect(ctx.destination);
+    state.alarmGainNode = master;
+
+    // Two oscillators, alternating freqs, with tremolo
+    const o1 = ctx.createOscillator();
+    const o2 = ctx.createOscillator();
+    o1.type = "square";
+    o2.type = "square";
+    o1.frequency.value = 880;
+    o2.frequency.value = 1318; // E6
+
+    // Tremolo LFO modulating a gain node
+    const tremGain = ctx.createGain();
+    tremGain.gain.value = 0;
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = 4.5; // 4.5 Hz pulse
+    const lfoGain = ctx.createGain();
+    lfoGain.gain.value = 0.5;
+    lfo.connect(lfoGain).connect(tremGain.gain);
+    // baseline so the gain oscillates between 0 and 1
+    tremGain.gain.value = 0.5;
+
+    o1.connect(tremGain);
+    o2.connect(tremGain);
+    tremGain.connect(master);
+
+    o1.start();
+    o2.start();
+    lfo.start();
+    state.alarmOscillators = [o1, o2, lfo];
+    state.isAlarming = true;
+
+    // Vibration
+    if (optVibrate.checked && navigator.vibrate) {
+      try {
+        const pattern = [];
+        for (let i = 0; i < 30; i++) pattern.push(400, 200);
+        navigator.vibrate(pattern);
+      } catch (_) {}
+    }
+  }
+
+  function stopAlarmOscillators() {
+    state.alarmOscillators.forEach((o) => {
+      try { o.stop(); } catch (_) {}
+      try { o.disconnect(); } catch (_) {}
+    });
+    state.alarmOscillators = [];
+    if (state.alarmGainNode) {
+      try { state.alarmGainNode.disconnect(); } catch (_) {}
+      state.alarmGainNode = null;
+    }
+    if (navigator.vibrate) navigator.vibrate(0);
+    state.isAlarming = false;
+  }
+
+  // "Warmup" — quieter pre-alarm
+  async function playWarmupBeep() {
+    const ctx = getAudioCtx();
+    await applySinkId(ctx);
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = 660;
+    gain.gain.value = 0;
+    gain.gain.linearRampToValueAtTime(0.08, ctx.currentTime + 0.05);
+    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.25);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.3);
+  }
+
+  // ---------- Wake Lock ----------
+  async function acquireWakeLock() {
+    if (!optWakeLock.checked) return;
+    if (!("wakeLock" in navigator)) return;
+    try {
+      state.wakeLock = await navigator.wakeLock.request("screen");
+      state.wakeLock.addEventListener("release", () => { state.wakeLock = null; });
+    } catch (e) {
+      console.warn("wake lock failed:", e);
+    }
+  }
+  async function releaseWakeLock() {
+    if (state.wakeLock) {
+      try { await state.wakeLock.release(); } catch (_) {}
+      state.wakeLock = null;
+    }
+  }
+  // Reacquire wake lock when tab comes back to foreground
+  document.addEventListener("visibilitychange", async () => {
+    if (document.visibilityState === "visible" && state.targetTime && !state.isAlarming) {
+      await acquireWakeLock();
+    }
+  });
+
+  // ---------- Timer flow ----------
+
+  function formatMMSS(ms) {
+    const total = Math.max(0, Math.ceil(ms / 1000));
+    const mm = Math.floor(total / 60).toString().padStart(2, "0");
+    const ss = (total % 60).toString().padStart(2, "0");
+    return [mm, ss];
+  }
+
+  function updateCountdown() {
+    const now = Date.now();
+    const remaining = state.targetTime - now;
+    const [mm, ss] = formatMMSS(remaining);
+    countdownEl.innerHTML = `${mm}<span class="sep">:</span>${ss}`;
+
+    const totalMs = state.durationMin * 60 * 1000;
+    const elapsed = totalMs - remaining;
+    const progress = Math.min(1, Math.max(0, elapsed / totalMs));
+    ringFg.style.strokeDashoffset = (RING_CIRC * progress).toFixed(2);
+
+    if (optWarmup.checked && !state.warmupTriggered && remaining <= 10000 && remaining > 9000) {
+      state.warmupTriggered = true;
+      // beep at 10, 7, 4, 2 seconds
+      [0, 3000, 6000, 8000].forEach((delay) => setTimeout(playWarmupBeep, delay));
+    }
+
+    if (remaining <= 0) {
+      triggerAlarm();
+    }
+  }
+
+  async function startNap() {
+    try {
+      // Prime audio context with a user gesture (required by browsers)
+      getAudioCtx();
+    } catch (_) {}
+
+    state.targetTime = Date.now() + state.durationMin * 60 * 1000;
+    state.warmupTriggered = false;
+    ringFg.style.strokeDashoffset = "0";
+
+    // Show end time
+    const end = new Date(state.targetTime);
+    const hh = end.getHours().toString().padStart(2, "0");
+    const mm = end.getMinutes().toString().padStart(2, "0");
+    endTimeEl.textContent = `${hh}:${mm} 에 깨워드립니다`;
+
+    sleepScreen.classList.add("active");
+    sleepScreen.classList.remove("dim");
+
+    await acquireWakeLock();
+    updateCountdown();
+    state.intervalId = setInterval(updateCountdown, 250);
+
+    // Optional auto-dim after 30s
+    if (optDim.checked) {
+      state.dimTimer = setTimeout(() => {
+        sleepScreen.classList.add("dim");
+      }, 30000);
+      // Tap to brighten temporarily
+      const brighten = () => {
+        sleepScreen.classList.remove("dim");
+        clearTimeout(state.dimTimer);
+        state.dimTimer = setTimeout(() => sleepScreen.classList.add("dim"), 8000);
+      };
+      sleepScreen.addEventListener("click", brighten, { passive: true });
+    }
+  }
+
+  function clearTimerState() {
+    clearInterval(state.intervalId);
+    clearTimeout(state.dimTimer);
+    state.intervalId = null;
+    state.targetTime = null;
+    state.warmupTriggered = false;
+  }
+
+  async function cancelNap() {
+    clearTimerState();
+    sleepScreen.classList.remove("active", "dim");
+    await releaseWakeLock();
+    showToast("쪽잠을 취소했어요");
+  }
+
+  async function triggerAlarm() {
+    clearTimerState();
+    sleepScreen.classList.remove("active", "dim");
+    alarmScreen.classList.add("active");
+    await startAlarm();
+  }
+
+  async function stopAlarm() {
+    stopAlarmOscillators();
+    alarmScreen.classList.remove("active");
+    await releaseWakeLock();
+    showToast("일어났어요! 공부 화이팅 💪", 2400);
+  }
+
+  async function snooze() {
+    stopAlarmOscillators();
+    alarmScreen.classList.remove("active");
+    state.durationMin = 5; // snooze 5 min
+    await startNap();
+    showToast("5분만 더 자기…", 1800);
+  }
+
+  startBtn.addEventListener("click", startNap);
+  cancelBtn.addEventListener("click", cancelNap);
+  stopAlarmBtn.addEventListener("click", stopAlarm);
+  snoozeBtn.addEventListener("click", snooze);
+
+  // Prevent accidental tab close during nap
+  window.addEventListener("beforeunload", (e) => {
+    if (state.targetTime || state.isAlarming) {
+      e.preventDefault();
+      e.returnValue = "";
+    }
+  });
+
+  // ---------- Init ----------
+  setDuration(15);
+  detectInitialOutput();
+
+})();
+</script>
+
+</body>
+</html>
